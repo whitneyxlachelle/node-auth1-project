@@ -2,6 +2,8 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const session = require('express-session');
+
+const knexSessionStore = require('connect-session-knex')(session);
 const restricted = require('../auth/restricted-middleware.js');
 
 // express routers
@@ -16,11 +18,20 @@ const sessionConfig = {
     secret: 'a flock of crows is known as a murder.',
     cookie: {
         maxAge: 3600 * 1000,
-        secure: false, 
-        httpOnly: true
+        secure: false,
     },
+    httpOnly: true,
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    store: new knexSessionStore(
+        {
+            knex: require('../database/dbConfig.js'),
+            tablename: 'sessions', // table that stores sessions inside of DB
+            sidfieldname: 'sid', // column that holds session id
+            createtable: true,
+            clearInterval: 3600 * 1000
+        }
+    )
 }
 
 // global middleware
